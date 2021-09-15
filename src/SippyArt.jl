@@ -63,21 +63,23 @@ end
 function sol_to_wav(sol, fn; sr=44100)
     arr = Array(sol)
     arr = arr .+ abs(minimum(arr))
-    for i in 1:length(prob.u0)
-
+    for i in 1:length(sol.u[1])
         arr[i, :] .= arr[i, :] ./ maximum(arr[i, :])
     end
     arr = 2*arr .- 1
 
-    for i in 1:2:length(prob.u0)-1
+    for i in 1:2:length(sol.u[1])-1
         wavwrite(arr[i:i+1, :]', sr, fn)
     end
     arr
 end
 
+include("diffeqs.jl")
+
 export datadir
 export new_project, my_videowrite
 export my_apply, my_apply!
 export sol_to_wav
+export lotka_volterra, lorenz, duffing, cyclically_symmetric, rossler, aizawa
 
 end # module

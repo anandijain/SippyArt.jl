@@ -1,15 +1,11 @@
 # used to create samples, used in https://8102.bandcamp.com/track/8-21-21
 
-using WAV
-function f(du,u,p,t)
-  du[1] = p[1]*u[1] - p[2]*u[1]*u[2] #prey
-  du[2] = -p[3]*u[2] + p[4]*u[1]*u[2] #predator
-end
+using WAV, DifferentialEquations, SippyArt
 
 u0 = [1.0;1.0]
 p = [1.5,1.0,3.0,1.0]
 tspan = (0.0, 1000.0)
-prob = ODEProblem(f, u0, tspan, p)
+prob = ODEProblem(lotka_volterra, u0, tspan, p)
 sol = solve(prob; saveat=tspan[1]:0.001:tspan[2])
 arr = Array(sol)
 for i in 1:length(u0)
@@ -156,3 +152,58 @@ plot(sol)
 sol = solve(prob)
 
 #todo duffing and van der pol
+
+
+
+p = [0.1, 0.1, 1.4]
+u0 = [1.0; -1.0]
+tspan = (0.0, 1e5)
+
+
+prob = ODEProblem(duffing!, u0, tspan, p)
+sys = modelingtoolkitize(prob)
+sol = solve(prob; saveat=tspan[1]:0.01:tspan[2])
+sol_to_wav(sol, "data/wav/duffing.wav")
+
+
+
+p = [0.32899]
+u0 = rand(3)
+tspan = (0.0, 1e4)
+
+
+prob = ODEProblem(cyclically_symmetric, u0, tspan, p)
+sys = modelingtoolkitize(prob)
+sol = solve(prob; saveat=tspan[1]:0.01:tspan[2])
+sol_to_wav(sol, "data/wav/cyclically_symmetric.wav")
+
+p = [0.2, 0.2, 5.7]
+u0 = rand(3)
+tspan = (0.0, 1e4)
+
+
+prob = ODEProblem(rossler, u0, tspan, p)
+sys = modelingtoolkitize(prob)
+sol = solve(prob; saveat=tspan[1]:0.01:tspan[2])
+sol_to_wav(sol, "data/wav/rossler.wav")
+
+
+p = [1, 3, 5, 1, 5, 1, 4, -8/5]
+u0 = rand(3)
+tspan = (0.0, 1e4)
+
+
+prob = ODEProblem(hindmarsh_rose, u0, tspan, p)
+sys = modelingtoolkitize(prob)
+sol = solve(prob; saveat=tspan[1]:0.01:tspan[2])
+sol_to_wav(sol, "data/wav/hindmarsh_rose.wav")
+
+p = (a = 0.95, b = 0.7, c = 0.6, d = 3.5, e = 0.25, f = 0.1)
+u0 = rand(3)
+tspan = (0.0, 1e4)
+
+
+prob = ODEProblem(aizawa, u0, tspan, p)
+sys = modelingtoolkitize(prob)
+sol = solve(prob; saveat=tspan[1]:0.01:tspan[2])
+sol_to_wav(sol, "data/wav/aizawa.wav")
