@@ -1,6 +1,7 @@
 # used to create samples, used in https://8102.bandcamp.com/track/8-21-21
 
 using WAV, DifferentialEquations, SippyArt
+using ModelingToolkit
 
 u0 = [1.0;1.0]
 p = [1.5,1.0,3.0,1.0]
@@ -207,3 +208,53 @@ prob = ODEProblem(aizawa, u0, tspan, p)
 sys = modelingtoolkitize(prob)
 sol = solve(prob; saveat=tspan[1]:0.01:tspan[2])
 sol_to_wav(sol, "data/wav/aizawa.wav")
+
+
+# discrete 
+using WAV, DifferentialEquations, SippyArt, Plots
+using ModelingToolkit
+sr = 88200
+@parameters t a=440 b=439
+# @parameters c nsteps δt
+# Diff = Difference(t; dt=1//sr)
+Diff = Difference(t; dt=1) 
+D2 = Differential(t)^2
+D = Differential(t)
+# Diff2 = Difference(t; dt=1)^2
+@variables x(t)=0.5 y(t)=0.5
+tspan = (0.0,10*sr) 
+
+eqs = [
+    Diff(x) ~ 1-a*x^2+y,
+    Diff(y) ~ b*x
+]
+
+eqs = [
+    Diff(x) ~ cos(a*x),
+    Diff(y) ~ sin(b*y)
+]
+
+@named sys = DiscreteSystem(eqs, t, [x, y], [a,b]) 
+u0 = [x =>0.5, y=>0.5]
+p = [a=>440,b=>439]
+prob = DiscreteProblem(sys, u0, tspan, p;saveat=tspan[1]:tspan[2])
+sol = solve(prob,FunctionMap())
+arr= Array(sol)
+arr2 = sol_to_wav(sol, "sincos.wav";sr=sr)
+
+arr = sin.(1:10*sr)
+wavwrite(arr, "idk.wav")
+
+
+
+eq = D2(x) ~ -a*x
+eq = D(x) ~ sin(x)
+@named sys = ODESystem(eq)
+sys = ode_order_lowering(sys)
+
+prob = ODEProblem(sys, [D(x)=>0], (0, 10.); saveat=0.:1//sr:10)
+prob = ODEProblem(sys, [], (0, 10.); saveat=0.:1//sr:10)
+sol = solve(prob)
+plot(sol; vars=(1,2))
+plot(sol)
+sol_to_wav(sol[x], "foodiffeq.wav";sr=sr)

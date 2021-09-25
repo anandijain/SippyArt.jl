@@ -6,7 +6,7 @@ using Test
 using Images, Colors
 using JLD2
 
-vid_name = "lorenz_81"
+vid_name = "lorenz_81_100"
 p = [10.0,28.0,8/3]
 u0 = [1.0;0.0;0.0]
 tspan = (0.0, 10.0)
@@ -15,7 +15,9 @@ prob = ODEProblem(SippyArt.lorenz, u0, tspan, p)
 img_fn = "data/81.jpeg"
 img_tmp = load(img_fn)
 img_tmp = convert(Matrix{RGB{N0f8}}, img_tmp)
-img = img_tmp[1:50:end - 50, 1:50:end - 50]
+stride = 11
+# img = img_tmp[1:50:end - 50, 1:50:end - 50]
+img = img_tmp[1:stride:end-stride, 1:stride:end-stride]
 img_size = size(img)
 
 pix_to_u0(pix) = convert(Array{Float64}, [pix.r, pix.g, pix.b])
@@ -25,7 +27,7 @@ function prob_func2(prob, i, repeat)
 end
 
 ensemble_prob = EnsembleProblem(prob, prob_func=prob_func2)
-sim = solve(ensemble_prob, EnsembleThreads(), trajectories=length(img), saveat=tspan[1]:0.001:tspan[2])
+sim = solve(ensemble_prob, EnsembleThreads(), trajectories=length(img), saveat=tspan[1]:1//60:tspan[2])
 @save "data/sols/$(vid_name).jld2" sol = sim
 
 pixs = map(y -> map(x -> RGB(x...), y), sim) # todo try colorview or reinterpret
