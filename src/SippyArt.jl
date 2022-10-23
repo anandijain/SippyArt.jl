@@ -60,16 +60,20 @@ function blend_vids(v, v2, mode=BlendHardLight)
     out
 end
 
-function sol_to_wav(sol, fn; sr=44100)
+"assumes each row is a state variable trajectorh"
+function sol_to_wav(sol, fn;channels=2, sr=44100)
     arr = Array(sol)
-    arr = arr .+ abs(minimum(arr))
-    for i in 1:length(sol.u[1])
+    r, c = size(arr)
+    for i in 1:r
+        arr[i, :] = arr[i, :] .+ abs(minimum(arr[i, :]))
         arr[i, :] .= arr[i, :] ./ maximum(arr[i, :])
     end
     arr = 2*arr .- 1
 
-    for i in 1:2:length(sol.u[1])-1
-        wavwrite(arr[i:i+1, :]', sr, fn)
+    for i in 1:channels:r-1
+        a, b = splitext(fn)
+        newfn = join([a, "_$i", b])
+        wavwrite(arr[i:i+channels-1, :]', sr, newfn)
     end
     arr
 end

@@ -1,2 +1,9 @@
-Manifest.toml
+# Manifest.toml
 data/
+
+*.mp4
+*.gif
+data/
+*.png
+*.wav
+*.csv

@@ -2,18 +2,17 @@
 
 using WAV, DifferentialEquations, SippyArt
 using ModelingToolkit
-
+sr=44100
 u0 = [1.0;1.0]
 p = [1.5,1.0,3.0,1.0]
-tspan = (0.0, 1000.0)
+tspan = (0.0, 10000.0)
 prob = ODEProblem(lotka_volterra, u0, tspan, p)
-sol = solve(prob; saveat=tspan[1]:0.001:tspan[2])
-arr = Array(sol)
-for i in 1:length(u0)
-    arr[i, :] .= arr[i, :] ./ maximum(arr[i, :])
-end
-arr = 2*arr .- 1
-wavwrite(arr', 44100, "lotka.wav")
+saveat = tspan[1]:0.1:tspan[2]
+sol = solve(prob; saveat=saveat)
+
+fn = "/Users/anand/Music/samples/lotka.wav"
+sol_to_wav(sol, fn; sr=sr)
+
 w, sr = wavread("/Users/anand/ableton_files/081821081821.wav")
 w, sr = wavread("/Users/anand/ableton_files/081821 Project/081821.wav")
 
@@ -258,3 +257,108 @@ sol = solve(prob)
 plot(sol; vars=(1,2))
 plot(sol)
 sol_to_wav(sol[x], "foodiffeq.wav";sr=sr)
+
+
+using DiffEqProblemLibrary, SippyArt, ModelingToolkit, DifferentialEquations
+DiffEqProblemLibrary.ODEProblemLibrary.importodeproblems()
+@parameters t b=0.208186
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ sin(y) - b*x,
+       D(y) ~ sin(z) - b*y,
+       D(z) ~ sin(x) - b*z]
+
+@named thomas = ODESystem(eqs)
+tspan = (0.0,100.0)
+
+@parameters t a=0.95 b=0.7 c=0.6 d=3.5 e=0.25 f=0.1
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ (z-b)*x-d*y,
+       D(y) ~ d*x+(z-b)*y,
+       D(z) ~ c+a*z-z^3/3-(x^2+y^2)*(1+e*z)+ f*z*x^3]
+
+@named aizawa = ODESystem(eqs)
+
+@parameters t a=3 b=2.7 c=1.7 d=2 e=9
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ y-a*x+b*y*z,
+       D(y) ~ c*y-x*z+z,
+       D(z) ~ d*x*y-e*z]
+
+@named dadras = ODESystem(eqs)
+
+@parameters t a=35 b=3 c=28
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ a*(y-x),
+       D(y) ~ (c-a)*x-x*z+c*y,
+       D(z) ~ x*y-b*z]
+
+@named chen = ODESystem(eqs)
+
+
+@parameters t a=0.14 b=0.10
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ y*(z-1+x^2) + b*x,
+       D(y) ~ x*(3*z+1-x^2)+b*y,
+       D(z) ~ -2*z*(a+x*y)]
+
+@named rabinovich_fabrikant = ODESystem(eqs)
+
+@parameters t a=2.07 b=1.79
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ y+a*x*y+x*z,
+       D(y) ~ 1-b*x^2+y*z,
+       D(z) ~ x-x^2-y^2]
+
+@named sprott = ODESystem(eqs)
+
+@parameters t a=1 b=3 c=1 d=5 r=1e-2 s=4 xr=-8/5 i=5
+@variables x(t)=1 y(t)=0 z(t)=0
+D = Differential(t)
+
+eqs = [D(x) ~ y-a*x^3+b*x^2-z+i,
+       D(y) ~ c-d*x^2-y,
+       D(z) ~ r*(s*(x-xr)-z)]
+
+@named hindmarsh_rose = ODESystem(eqs)
+
+@parameters t p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12
+@variables y1(t) y2(t) y3(t) y4(t) y5(t) y6(t) y7(t) y8(t)
+D = Differential(t)
+eqs = [D(y1) ~ -p1*y1 + p2*y2 + p3*y3 + p4,
+       D(y2) ~ p1*y1 - p5*y2,
+       D(y3) ~ -p6*y3 + p2*y4 + p7*y5,
+       D(y4) ~ p3*y2 + p1*y3 - p8*y4,
+       D(y5) ~ -p9*y5 + p2*y6 + p2*y7,
+       D(y6) ~ -p10*y6*y8 + p11*y4 + p1*y5 -
+                p2*y6 + p11*y7,
+       D(y7) ~  p10*y6*y8 - p12*y7,
+       D(y8) ~ -p10*y6*y8 + p12*y7]
+de = ODESystem(eqs; name=:hires)
+
+function sys_to_wav(sys, tspan; sr=88200)
+    prob = ODEProblem(sys,[],tspan; saveat=tspan[1]:100//sr:tspan[2])
+    sol = solve(prob)
+    sol_to_wav(sol, "/Users/anand/Music/samples/$(nameof(sys)).wav";sr=sr)
+    # plot(sol)
+    # sys, prob, sol
+    nothing
+end
+
+sys_to_wav(hindmarsh_rose, tspan)
+
+syss= [thomas, aizawa, dadras, chen, rabinovich_fabrikant]
+for sys in syss
+    sys_to_wav(sys, tspan)
+end
